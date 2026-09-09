@@ -2,28 +2,31 @@
 
 Tennis API take-home using NestJS, TypeScript, Prisma, and PostgreSQL.
 
-Prisma and the local database are set up. Player endpoints and statistics are next.
+Prisma and the Neon PostgreSQL connection are set up. Player endpoints and statistics are next.
 For now, `GET /api` returns `Hello World!`.
 
 ## Getting started
 
-You’ll need Node.js 24 and Docker Compose. The API runs locally and PostgreSQL runs
-in Docker.
+You’ll need Node.js 24 and a Neon PostgreSQL database. The API runs locally and
+connects to Neon.
 
 ```bash
 nvm use
 npm ci
 cp .env.example .env
 
-docker compose up -d --wait postgres
+```
+
+Keep your existing `.env` if you already have one. In the Neon console, open
+**Connect**, enable **Connection pooling**, and copy the PostgreSQL connection
+string into `DATABASE_URL` in `.env`, keeping its SSL parameters. The values in
+`.env.example` are placeholders.
+
+```bash
 npm run start:dev
 ```
 
-Keep your existing `.env` if you already have one. The example credentials are for
-local development.
-
-The API runs at `http://localhost:3000/api` and PostgreSQL at `localhost:5433`.
-If you change the database settings in `.env`, update `DATABASE_URL` to match.
+The API runs at `http://localhost:3000/api`.
 
 Swagger docs: [localhost:3000/api/docs](http://localhost:3000/api/docs).
 
@@ -35,11 +38,3 @@ npm run build
 npm test -- --runInBand
 npm run test:e2e -- --runInBand
 ```
-
-## Stopping the database
-
-```bash
-docker compose stop postgres
-```
-
-Data stays in a Docker volume. Running `docker compose down -v` deletes it.

@@ -7,3 +7,34 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Sex {
+  M
+  F
+}
+
+model Country {
+  code    String   @id @db.VarChar(3)
+  picture String
+  players Player[]
+}
+
+model Player {
+  id          Int     @id @default(autoincrement())
+  firstname   String
+  lastname    String
+  shortname   String
+  sex         Sex
+  picture     String
+  countryCode String  @db.VarChar(3)
+  country     Country @relation(fields: [countryCode], references: [code], onDelete: Restrict)
+  rank        Int
+  points      Int
+  weight      Int
+  height      Int
+  age         Int
+  last        Int[]   @default([])
+
+  @@index([rank, id])
+  @@index([countryCode])
+}
