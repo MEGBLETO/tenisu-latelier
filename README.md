@@ -3,7 +3,7 @@
 Tennis API take-home using NestJS, TypeScript, Prisma, and PostgreSQL.
 
 Prisma and the local database are set up. Player endpoints and statistics are next.
-For now, `GET /` returns `Hello World!`.
+For now, `GET /api` returns `Hello World!`.
 
 ## Getting started
 
@@ -22,8 +22,10 @@ npm run start:dev
 Keep your existing `.env` if you already have one. The example credentials are for
 local development.
 
-The API runs at `http://localhost:3000` and PostgreSQL at `localhost:5433`.
+The API runs at `http://localhost:3000/api` and PostgreSQL at `localhost:5433`.
 If you change the database settings in `.env`, update `DATABASE_URL` to match.
+
+Swagger docs: [localhost:3000/api/docs](http://localhost:3000/api/docs).
 
 ## Checks
 
