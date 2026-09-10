@@ -6,7 +6,13 @@ Tennis API take-home using NestJS, TypeScript, Prisma, and PostgreSQL.
 `GET /api/players/:id` returns a player, or 404 if the player does not exist.
 Invalid IDs return 400.
 `GET /api/statistics` returns the best country win ratio, average BMI, and median height.
-Player creation is still to come.
+`POST /api/players` accepts the same player structure without `id` and returns
+201 with the created player and a `Location` header. All fields are required;
+unknown fields are rejected. Names must not be blank, URLs must use HTTP or HTTPS,
+and country codes must contain three uppercase letters. Rank, weight, and height
+must be positive integers; points and age can be zero. Match history accepts only
+0 and 1, including an empty array. Integers are limited to 2147483647.
+Existing countries keep their stored picture; new countries are created with the player.
 
 Statistics use recent match results (`last`). Country ratios use total wins divided
 by total matches, with ties resolved alphabetically by country code. Countries
