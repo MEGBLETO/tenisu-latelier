@@ -18,6 +18,9 @@ must be positive integers; points and age can be zero. Match history accepts onl
 0 and 1, including an empty array. Integers are limited to 2147483647.
 Existing countries keep their stored picture; new countries are created with the player.
 
+`GET /api/health` checks that the API can reach the database. It returns `200` when
+both are available and `503` when the database cannot be reached.
+
 Statistics use recent match results (`last`). Country ratios use total wins divided
 by total matches, with ties resolved alphabetically by country code. Countries
 without matches are excluded. BMI is averaged per player using kilograms and metres;

@@ -177,6 +177,13 @@ describe('Players endpoints', () => {
       });
   });
 
+  it('reports API and database availability', async () => {
+    await request(app.getHttpServer())
+      .get('/api/health')
+      .expect(200)
+      .expect({ status: 'ok', database: 'up' });
+  });
+
   it('calculates statistics from stored players', async () => {
     await prisma.country.create({
       data: { code: 'SRB', picture: 'https://example.com/srb.png' },
