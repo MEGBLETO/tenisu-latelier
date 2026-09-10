@@ -5,8 +5,15 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { PlayersModule } from './players/players.module';
 
+import { StatisticsModule } from './statistics/statistics.module';
+
 @Module({
-  imports: [ConfigModule.forRoot(), PrismaModule, PlayersModule],
+  imports: [
+    ConfigModule.forRoot(),
+    PrismaModule,
+    PlayersModule,
+    StatisticsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
