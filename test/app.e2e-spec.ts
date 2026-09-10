@@ -48,5 +48,6 @@ describe('AppController (e2e)', () => {
     expect(response.body).toHaveProperty(['paths', '/api', 'get']);
     expect(response.body).toHaveProperty(['paths', '/api/statistics', 'get']);
     expect(response.body).toHaveProperty(['paths', '/api/players', 'post']);
+    expect(response.body).toHaveProperty(['paths', '/api/health', 'get']);
   });
 });
