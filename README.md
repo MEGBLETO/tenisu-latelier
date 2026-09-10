@@ -37,10 +37,14 @@ Swagger docs: [localhost:3000/api/docs](http://localhost:3000/api/docs).
 ```bash
 npm run prisma:validate
 npm run build
+npm run lint:check
 npm test -- --runInBand
 npm run test:e2e -- --runInBand
 ```
 
 The unit and mocked HTTP tests run without a database. End-to-end tests require
 Docker: the command starts a temporary PostgreSQL database, applies migrations,
-and removes it afterward. It does not use your Neon database.
+and removes it afterward. It does not use the Neon database.
+
+GitHub Actions runs these checks on every push and pull request. No Neon secrets
+are needed.
