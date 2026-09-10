@@ -16,7 +16,10 @@ describe('Prisma error responses', () => {
   beforeAll(async () => {
     const module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(PrismaService)
-      .useValue({ player: { findMany } })
+      .useValue({
+        player: { findMany, count: jest.fn().mockResolvedValue(0) },
+        $transaction: (queries: Promise<unknown>[]) => Promise.all(queries),
+      })
       .compile();
 
     app = module.createNestApplication();
@@ -118,6 +121,6 @@ describe('Prisma error responses', () => {
     await request(app.getHttpServer())
       .get('/api/players')
       .expect(200)
-      .expect([]);
+      .expect({ players: [], total: 0, page: 1, limit: 20 });
   });
 });

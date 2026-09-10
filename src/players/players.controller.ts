@@ -1,27 +1,30 @@
 import {
   BadRequestException,
   Body,
-  Post,
-  Res,
   Controller,
   Get,
   Param,
   ParseIntPipe,
+  Post,
+  Query,
+  Res,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
-  ApiNotFoundResponse,
-  ApiParam,
   ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiServiceUnavailableResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { CreatePlayerDto } from './dto/create-player.dto';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
+import { CreatePlayerDto } from './dto/create-player.dto';
+import { ListPlayersQueryDto } from './dto/list-players-query.dto';
+import { PlayerListResponseDto } from './dto/player-list-response.dto';
 import { PlayerResponseDto } from './dto/player-response.dto';
 import { PlayersService } from './players.service';
 
@@ -37,9 +40,8 @@ export class PlayersController {
   })
   @ApiOkResponse({
     description:
-      'Players ordered from best to worst. Returns [] when no players exist.',
-    type: PlayerResponseDto,
-    isArray: true,
+      'A page of players ordered by rank, with the total matching count.',
+    type: PlayerListResponseDto,
   })
   @ApiInternalServerErrorResponse({
     description: 'An unexpected error occurred.',
@@ -50,8 +52,12 @@ export class PlayersController {
       'The database is temporarily unavailable or the request timed out.',
     type: ErrorResponseDto,
   })
-  findAll(): Promise<PlayerResponseDto[]> {
-    return this.playersService.findAll();
+  @ApiBadRequestResponse({
+    description: 'Invalid pagination or search parameters.',
+    type: ErrorResponseDto,
+  })
+  findAll(@Query() query: ListPlayersQueryDto): Promise<PlayerListResponseDto> {
+    return this.playersService.findAll(query);
   }
 
   @Get(':id')

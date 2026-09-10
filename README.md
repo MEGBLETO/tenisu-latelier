@@ -2,7 +2,11 @@
 
 Tennis API take-home using NestJS, TypeScript, Prisma, and PostgreSQL.
 
-`GET /api/players` returns players ordered by rank, then ID for ties.
+`GET /api/players?page=1&limit=20&search=novak` returns players ordered by rank,
+then ID for ties. The response contains `players`, `total`, `page`, and `limit`.
+Page defaults to 1 and limit to 20 (maximum 100). Optional search matches part of
+either first or last name, ignoring case and surrounding whitespace. `total` counts
+all matching players. Pages beyond the results return an empty `players` array.
 `GET /api/players/:id` returns a player, or 404 if the player does not exist.
 Invalid IDs return 400.
 `GET /api/statistics` returns the best country win ratio, average BMI, and median height.

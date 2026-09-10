@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import { PlayerListResponseDto } from '../src/players/dto/player-list-response.dto';
 import { CreatePlayerDto } from '../src/players/dto/create-player.dto';
 import { PlayerResponseDto } from '../src/players/dto/player-response.dto';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -68,7 +69,9 @@ describe('Players endpoints', () => {
       .get('/api/players')
       .expect(200)
       .expect('Content-Type', /json/);
-    const body = response.body as PlayerResponseDto[];
+    const page = response.body as PlayerListResponseDto;
+    expect(page).toMatchObject({ total: 4, page: 1, limit: 20 });
+    const body = page.players;
 
     expect(body.map((item) => item.id)).toEqual([90, 20, 30, 10]);
     expect(body.map((item) => item.data.rank)).toEqual([1, 5, 5, 20]);
@@ -95,7 +98,7 @@ describe('Players endpoints', () => {
     await request(app.getHttpServer())
       .get('/api/players')
       .expect(200)
-      .expect([]);
+      .expect({ players: [], total: 0, page: 1, limit: 20 });
   });
 
   it('returns the player matching the requested ID', async () => {
@@ -239,7 +242,7 @@ describe('Players endpoints', () => {
       await request(app.getHttpServer())
         .get('/api/players')
         .expect(200)
-        .expect([player]);
+        .expect({ players: [player], total: 1, page: 1, limit: 20 });
       await request(app.getHttpServer())
         .get('/api/statistics')
         .expect(200)
@@ -301,5 +304,146 @@ describe('Players endpoints', () => {
         expect(await prisma.country.count()).toBe(0);
       },
     );
+  });
+
+  describe('pagination and name search', () => {
+    beforeEach(async () => {
+      await prisma.country.create({
+        data: { code: 'USA', picture: 'https://example.com/usa.png' },
+      });
+      const player = {
+        shortname: 'T.PLA',
+        sex: 'F' as const,
+        picture: 'https://example.com/player.png',
+        countryCode: 'USA',
+        points: 100,
+        weight: 70000,
+        height: 180,
+        age: 30,
+        last: [],
+      };
+      await prisma.player.createMany({
+        data: [
+          {
+            ...player,
+            id: 95,
+            firstname: 'Venus',
+            lastname: 'Williams',
+            rank: 52,
+          },
+          {
+            ...player,
+            id: 102,
+            firstname: 'Serena',
+            lastname: 'Williams',
+            rank: 10,
+          },
+          {
+            ...player,
+            id: 17,
+            firstname: 'Rafael',
+            lastname: 'Nadal',
+            rank: 1,
+          },
+          {
+            ...player,
+            id: 52,
+            firstname: 'Novak',
+            lastname: 'Djokovic',
+            rank: 10,
+          },
+        ],
+      });
+    });
+
+    it('returns consecutive pages in ranking and ID order', async () => {
+      const first = await request(app.getHttpServer())
+        .get('/api/players?page=1&limit=2')
+        .expect(200);
+      const second = await request(app.getHttpServer())
+        .get('/api/players?page=2&limit=2')
+        .expect(200);
+      expect(
+        (first.body as PlayerListResponseDto).players.map(
+          (player) => player.id,
+        ),
+      ).toEqual([17, 52]);
+      expect(
+        (second.body as PlayerListResponseDto).players.map(
+          (player) => player.id,
+        ),
+      ).toEqual([102, 95]);
+      expect(first.body).toMatchObject({ total: 4, page: 1, limit: 2 });
+      expect(second.body).toMatchObject({ total: 4, page: 2, limit: 2 });
+    });
+
+    it('paginates a case-insensitive surname search with a filtered total', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/players')
+        .query({ search: '  wILL  ', page: 2, limit: 1 })
+        .expect(200);
+      expect(response.body).toMatchObject({ total: 2, page: 2, limit: 1 });
+      expect(
+        (response.body as PlayerListResponseDto).players.map(
+          (player) => player.id,
+        ),
+      ).toEqual([95]);
+    });
+
+    it('matches a partial first name', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/players?search=OVA')
+        .expect(200);
+      expect(response.body).toMatchObject({ total: 1 });
+      expect(
+        (response.body as PlayerListResponseDto).players.map(
+          (player) => player.id,
+        ),
+      ).toEqual([52]);
+    });
+
+    it('returns an empty page beyond the results without losing the total', async () => {
+      await request(app.getHttpServer())
+        .get('/api/players?page=3&limit=2')
+        .expect(200)
+        .expect({ players: [], total: 4, page: 3, limit: 2 });
+    });
+
+    it.each(['missing', '%', '_', '\\'])(
+      'returns no matches for %s',
+      async (search) => {
+        await request(app.getHttpServer())
+          .get('/api/players')
+          .query({ search })
+          .expect(200)
+          .expect({ players: [], total: 0, page: 1, limit: 20 });
+      },
+    );
+
+    it('treats whitespace-only search as no filter', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/players')
+        .query({ search: '  ' })
+        .expect(200);
+      expect(response.body).toMatchObject({ total: 4, page: 1, limit: 20 });
+    });
+  });
+
+  it.each([
+    'page=0',
+    'page=-1',
+    'page=1.5',
+    'page=abc',
+    'page=2147483648',
+    'page=2147483647&limit=100',
+    'limit=0',
+    'limit=101',
+    'limit=1.5',
+    'limit=abc',
+    'page=1&page=2',
+    'search=a&search=b',
+    'unexpected=true',
+  ])('rejects invalid list parameters: %s', async (query) => {
+    await request(app.getHttpServer()).get(`/api/players?${query}`).expect(400);
   });
 });
