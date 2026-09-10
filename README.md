@@ -3,7 +3,8 @@
 Tennis API take-home using NestJS, TypeScript, Prisma, and PostgreSQL.
 
 `GET /api/players` returns players ordered by rank, then ID for ties.
-Player lookup, creation, and statistics are still to come.
+`GET /api/players/:id` returns a player, or 404 if the player does not exist.
+Invalid IDs return 400. Creation and statistics are still to come.
 
 ## Getting started
 

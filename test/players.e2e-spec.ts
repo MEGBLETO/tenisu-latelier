@@ -7,7 +7,7 @@ import { PlayerResponseDto } from '../src/players/dto/player-response.dto';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { setupApp } from '../src/setup-app';
 
-describe('GET /api/players', () => {
+describe('Players endpoints', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
 
@@ -96,4 +96,69 @@ describe('GET /api/players', () => {
       .expect(200)
       .expect([]);
   });
+
+  it('returns the player matching the requested ID', async () => {
+    await prisma.country.create({
+      data: { code: 'SRB', picture: 'https://example.com/srb.png' },
+    });
+    await prisma.player.create({
+      data: {
+        id: 52,
+        firstname: 'Novak',
+        lastname: 'Djokovic',
+        shortname: 'N.DJO',
+        sex: 'M',
+        picture: 'https://example.com/djokovic.png',
+        countryCode: 'SRB',
+        rank: 2,
+        points: 2542,
+        weight: 80000,
+        height: 188,
+        age: 31,
+        last: [1, 1, 1, 1, 1],
+      },
+    });
+
+    await request(app.getHttpServer())
+      .get('/api/players/52')
+      .expect(200)
+      .expect({
+        id: 52,
+        firstname: 'Novak',
+        lastname: 'Djokovic',
+        shortname: 'N.DJO',
+        sex: 'M',
+        picture: 'https://example.com/djokovic.png',
+        country: { code: 'SRB', picture: 'https://example.com/srb.png' },
+        data: {
+          rank: 2,
+          points: 2542,
+          weight: 80000,
+          height: 188,
+          age: 31,
+          last: [1, 1, 1, 1, 1],
+        },
+      });
+    await request(app.getHttpServer())
+      .get('/api/players/53')
+      .expect(404)
+      .expect({
+        statusCode: 404,
+        message: 'Player not found',
+        error: 'Not Found',
+      });
+  });
+
+  it.each(['abc', '1.5', '0', '-1', '2147483648', '9007199254740993'])(
+    'rejects invalid player ID %s',
+    async (id) => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/players/${id}`)
+        .expect(400);
+      expect(response.body).toMatchObject({
+        statusCode: 400,
+        error: 'Bad Request',
+      });
+    },
+  );
 });

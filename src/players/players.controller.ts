@@ -1,5 +1,14 @@
-import { Controller, Get } from '@nestjs/common';
 import {
+  BadRequestException,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+} from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
+  ApiParam,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiOperation,
@@ -37,5 +46,33 @@ export class PlayersController {
   })
   findAll(): Promise<PlayerResponseDto[]> {
     return this.playersService.findAll();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a player by ID' })
+  @ApiParam({
+    name: 'id',
+    schema: { type: 'integer', minimum: 1, maximum: 2147483647 },
+    example: 52,
+  })
+  @ApiOkResponse({ type: PlayerResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Invalid player ID.',
+    type: ErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Player not found.',
+    type: ErrorResponseDto,
+  })
+  @ApiInternalServerErrorResponse({ type: ErrorResponseDto })
+  @ApiServiceUnavailableResponse({ type: ErrorResponseDto })
+  findOne(@Param('id', ParseIntPipe) id: number): Promise<PlayerResponseDto> {
+    if (id < 1 || id > 2147483647) {
+      throw new BadRequestException(
+        'Player ID must be between 1 and 2147483647',
+      );
+    }
+
+    return this.playersService.findOne(id);
   }
 }

@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlayerResponseDto } from './dto/player-response.dto';
 
@@ -12,7 +13,26 @@ export class PlayersService {
       include: { country: true },
     });
 
-    return players.map((player) => ({
+    return players.map((player) => this.toResponse(player));
+  }
+
+  async findOne(id: number): Promise<PlayerResponseDto> {
+    const player = await this.prisma.player.findUnique({
+      where: { id },
+      include: { country: true },
+    });
+
+    if (!player) {
+      throw new NotFoundException('Player not found');
+    }
+
+    return this.toResponse(player);
+  }
+
+  private toResponse(
+    player: Prisma.PlayerGetPayload<{ include: { country: true } }>,
+  ): PlayerResponseDto {
+    return {
       id: player.id,
       firstname: player.firstname,
       lastname: player.lastname,
@@ -31,6 +51,6 @@ export class PlayersService {
         age: player.age,
         last: player.last,
       },
-    }));
+    };
   }
 }

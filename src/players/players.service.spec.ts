@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Sex } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -6,13 +7,18 @@ import { PlayersService } from './players.service';
 describe('PlayersService', () => {
   let service: PlayersService;
   const findMany = jest.fn();
+  const findUnique = jest.fn();
 
   beforeEach(async () => {
     findMany.mockReset();
+    findUnique.mockReset();
     const module = await Test.createTestingModule({
       providers: [
         PlayersService,
-        { provide: PrismaService, useValue: { player: { findMany } } },
+        {
+          provide: PrismaService,
+          useValue: { player: { findMany, findUnique } },
+        },
       ],
     }).compile();
     service = module.get(PlayersService);
@@ -57,6 +63,11 @@ describe('PlayersService', () => {
         },
       },
     ]);
+  });
+
+  it('throws 404 when the player does not exist', async () => {
+    findUnique.mockResolvedValue(null);
+    await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
   });
 
   it('returns an empty array when there are no players', async () => {
