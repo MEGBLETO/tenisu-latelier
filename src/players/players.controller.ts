@@ -1,5 +1,8 @@
 import {
   BadRequestException,
+  Body,
+  Post,
+  Res,
   Controller,
   Get,
   Param,
@@ -7,6 +10,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiParam,
   ApiInternalServerErrorResponse,
@@ -15,6 +19,8 @@ import {
   ApiServiceUnavailableResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import type { Response } from 'express';
+import { CreatePlayerDto } from './dto/create-player.dto';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { PlayerResponseDto } from './dto/player-response.dto';
 import { PlayersService } from './players.service';
@@ -74,5 +80,31 @@ export class PlayersController {
     }
 
     return this.playersService.findOne(id);
+  }
+
+  @Post()
+  @ApiOperation({ summary: 'Add a player' })
+  @ApiCreatedResponse({
+    type: PlayerResponseDto,
+    headers: {
+      Location: {
+        description: 'URL of the created player.',
+        schema: { type: 'string', example: '/api/players/103' },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid player data.',
+    type: ErrorResponseDto,
+  })
+  @ApiInternalServerErrorResponse({ type: ErrorResponseDto })
+  @ApiServiceUnavailableResponse({ type: ErrorResponseDto })
+  async create(
+    @Body() input: CreatePlayerDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<PlayerResponseDto> {
+    const player = await this.playersService.create(input);
+    response.location(`/api/players/${player.id}`);
+    return player;
   }
 }

@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import { CreatePlayerDto } from '../src/players/dto/create-player.dto';
 import { PlayerResponseDto } from '../src/players/dto/player-response.dto';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { setupApp } from '../src/setup-app';
@@ -201,5 +202,104 @@ describe('Players endpoints', () => {
         averageBmi: 20,
         medianHeight: 200,
       });
+  });
+
+  describe('POST /api/players', () => {
+    const input: CreatePlayerDto = {
+      firstname: 'Test',
+      lastname: 'Player',
+      shortname: 'T.PLA',
+      sex: 'M',
+      picture: 'https://example.com/player.png',
+      country: { code: 'SRB', picture: 'https://example.com/srb.png' },
+      data: {
+        rank: 1,
+        points: 100,
+        weight: 80000,
+        height: 200,
+        age: 30,
+        last: [1, 0, 1],
+      },
+    };
+
+    it('creates a player and country, and returns a working Location', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/players')
+        .send(input)
+        .expect(201);
+      const player = response.body as PlayerResponseDto;
+      expect(Number.isInteger(player.id)).toBe(true);
+      expect(player.id).toBeGreaterThan(0);
+      expect(player).toEqual({ ...input, id: player.id });
+      expect(response.headers.location).toBe(`/api/players/${player.id}`);
+      await request(app.getHttpServer())
+        .get(`/api/players/${player.id}`)
+        .expect(200)
+        .expect(player);
+      await request(app.getHttpServer())
+        .get('/api/players')
+        .expect(200)
+        .expect([player]);
+      await request(app.getHttpServer())
+        .get('/api/statistics')
+        .expect(200)
+        .expect({
+          bestCountry: { code: 'SRB', winRatio: 0.67 },
+          averageBmi: 20,
+          medianHeight: 200,
+        });
+    });
+
+    it('reuses the country without changing its picture', async () => {
+      const country = {
+        code: 'SRB',
+        picture: 'https://example.com/original.png',
+      };
+      await prisma.country.create({ data: country });
+      const response = await request(app.getHttpServer())
+        .post('/api/players')
+        .send(input)
+        .expect(201);
+      const player = response.body as PlayerResponseDto;
+      expect(player.country).toEqual(country);
+      expect(await prisma.country.findMany()).toEqual([country]);
+    });
+
+    it('supports simultaneous player creations for a new country', async () => {
+      const responses = await Promise.all([
+        request(app.getHttpServer())
+          .post('/api/players')
+          .send(input)
+          .expect(201),
+        request(app.getHttpServer())
+          .post('/api/players')
+          .send({ ...input, firstname: 'Another' })
+          .expect(201),
+      ]);
+      const first = responses[0].body as PlayerResponseDto;
+      const second = responses[1].body as PlayerResponseDto;
+      expect(first.id).not.toBe(second.id);
+      expect(await prisma.player.count()).toBe(2);
+      expect(await prisma.country.count()).toBe(1);
+    });
+
+    it.each([
+      { id: 52 },
+      { data: { ...input.data, height: 0 } },
+      { country: { ...input.country, extra: true } },
+    ])(
+      'rejects invalid input without writing to the database: %j',
+      async (changes) => {
+        const response = await request(app.getHttpServer())
+          .post('/api/players')
+          .send({ ...input, ...changes })
+          .expect(400);
+        expect(
+          Array.isArray((response.body as { message: unknown }).message),
+        ).toBe(true);
+        expect(await prisma.player.count()).toBe(0);
+        expect(await prisma.country.count()).toBe(0);
+      },
+    );
   });
 });
