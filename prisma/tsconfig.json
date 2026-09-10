@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "incremental": false,
+    "strict": true
+  },
+  "include": ["seed.ts"]
+}
