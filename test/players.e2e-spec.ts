@@ -161,4 +161,45 @@ describe('Players endpoints', () => {
       });
     },
   );
+
+  it('returns empty statistics when there are no players', async () => {
+    await request(app.getHttpServer())
+      .get('/api/statistics')
+      .expect(200)
+      .expect({
+        bestCountry: null,
+        averageBmi: null,
+        medianHeight: null,
+      });
+  });
+
+  it('calculates statistics from stored players', async () => {
+    await prisma.country.create({
+      data: { code: 'SRB', picture: 'https://example.com/srb.png' },
+    });
+    await prisma.player.create({
+      data: {
+        firstname: 'Test',
+        lastname: 'Player',
+        shortname: 'T.PLA',
+        sex: 'M',
+        picture: 'https://example.com/player.png',
+        countryCode: 'SRB',
+        rank: 1,
+        points: 100,
+        weight: 80000,
+        height: 200,
+        age: 30,
+        last: [1, 0, 1],
+      },
+    });
+    await request(app.getHttpServer())
+      .get('/api/statistics')
+      .expect(200)
+      .expect({
+        bestCountry: { code: 'SRB', winRatio: 0.67 },
+        averageBmi: 20,
+        medianHeight: 200,
+      });
+  });
 });

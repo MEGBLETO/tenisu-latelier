@@ -4,7 +4,16 @@ Tennis API take-home using NestJS, TypeScript, Prisma, and PostgreSQL.
 
 `GET /api/players` returns players ordered by rank, then ID for ties.
 `GET /api/players/:id` returns a player, or 404 if the player does not exist.
-Invalid IDs return 400. Creation and statistics are still to come.
+Invalid IDs return 400.
+`GET /api/statistics` returns the best country win ratio, average BMI, and median height.
+Player creation is still to come.
+
+Statistics use recent match results (`last`). Country ratios use total wins divided
+by total matches, with ties resolved alphabetically by country code. Countries
+without matches are excluded. BMI is averaged per player using kilograms and metres;
+height is returned in centimetres. BMI and win ratio are rounded to two decimals
+after calculation. An empty database returns null for all three fields; no match
+history returns null for the best country.
 
 ## Getting started
 

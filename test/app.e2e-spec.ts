@@ -46,5 +46,6 @@ describe('AppController (e2e)', () => {
       info: { title: 'Tenisu — L’Atelier', version: '0.0.1' },
     });
     expect(response.body).toHaveProperty(['paths', '/api', 'get']);
+    expect(response.body).toHaveProperty(['paths', '/api/statistics', 'get']);
   });
 });
