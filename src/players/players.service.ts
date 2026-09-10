@@ -1,20 +1,48 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
+import { ListPlayersQueryDto } from './dto/list-players-query.dto';
+import { PlayerListResponseDto } from './dto/player-list-response.dto';
 import { PlayerResponseDto } from './dto/player-response.dto';
 
 @Injectable()
 export class PlayersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<PlayerResponseDto[]> {
-    const players = await this.prisma.player.findMany({
-      orderBy: [{ rank: 'asc' }, { id: 'asc' }],
-      include: { country: true },
-    });
+  async findAll(query: ListPlayersQueryDto): Promise<PlayerListResponseDto> {
+    const { page, limit } = query;
+    const skip = (page - 1) * limit;
+    if (skip > 2147483647) {
+      throw new BadRequestException('Page is too large for the selected limit');
+    }
 
-    return players.map((player) => this.toResponse(player));
+    const where = this.getNameFilter(query.search);
+
+    const [players, total] = await this.prisma.$transaction(
+      [
+        this.prisma.player.findMany({
+          where,
+          orderBy: [{ rank: 'asc' }, { id: 'asc' }],
+          skip,
+          take: limit,
+          include: { country: true },
+        }),
+        this.prisma.player.count({ where }),
+      ],
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
+
+    return {
+      players: players.map((player) => this.toResponse(player)),
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOne(id: number): Promise<PlayerResponseDto> {
@@ -58,6 +86,25 @@ export class PlayersService {
     });
 
     return this.toResponse(player);
+  }
+
+  private getNameFilter(search?: string): Prisma.PlayerWhereInput {
+    const name = search?.trim();
+    if (!name) {
+      return {};
+    }
+
+    const escapedName = name
+      .replaceAll('\\', '\\\\')
+      .replaceAll('%', '\\%')
+      .replaceAll('_', '\\_');
+
+    return {
+      OR: [
+        { firstname: { contains: escapedName, mode: 'insensitive' } },
+        { lastname: { contains: escapedName, mode: 'insensitive' } },
+      ],
+    };
   }
 
   private toResponse(

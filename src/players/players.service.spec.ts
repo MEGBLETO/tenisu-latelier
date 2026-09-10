@@ -8,16 +8,21 @@ describe('PlayersService', () => {
   let service: PlayersService;
   const findMany = jest.fn();
   const findUnique = jest.fn();
+  const count = jest.fn();
 
   beforeEach(async () => {
     findMany.mockReset();
+    count.mockReset().mockResolvedValue(0);
     findUnique.mockReset();
     const module = await Test.createTestingModule({
       providers: [
         PlayersService,
         {
           provide: PrismaService,
-          useValue: { player: { findMany, findUnique } },
+          useValue: {
+            player: { findMany, findUnique, count },
+            $transaction: (queries: Promise<unknown>[]) => Promise.all(queries),
+          },
         },
       ],
     }).compile();
@@ -44,7 +49,7 @@ describe('PlayersService', () => {
       },
     ]);
 
-    expect(await service.findAll()).toEqual([
+    expect((await service.findAll({ page: 1, limit: 20 })).players).toEqual([
       {
         id: 52,
         firstname: 'Novak',
@@ -72,6 +77,6 @@ describe('PlayersService', () => {
 
   it('returns an empty array when there are no players', async () => {
     findMany.mockResolvedValue([]);
-    expect(await service.findAll()).toEqual([]);
+    expect((await service.findAll({ page: 1, limit: 20 })).players).toEqual([]);
   });
 });
