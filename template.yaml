@@ -16,6 +16,7 @@ Globals:
     Environment:
       Variables:
         DATABASE_URL: !Ref DatabaseUrl
+        API_STAGE: Prod
 
 Resources:
   ApiFunction:

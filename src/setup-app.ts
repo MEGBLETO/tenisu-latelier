@@ -10,9 +10,14 @@ export function setupApp(app: INestApplication) {
   const config = new DocumentBuilder()
     .setTitle('Tenisu — L’Atelier')
     .setDescription('Tennis players and statistics API.')
-    .setVersion('0.0.1')
-    .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
+    .setVersion('0.0.1');
+  const apiStage = process.env.API_STAGE;
+  if (apiStage) {
+    config.addServer(`/${apiStage}`);
+  }
+  const documentConfig = config.build();
+  const documentFactory = () =>
+    SwaggerModule.createDocument(app, documentConfig);
   SwaggerModule.setup('docs', app, documentFactory, {
     useGlobalPrefix: true,
   });
