@@ -11,7 +11,7 @@ export function setupApp(app: INestApplication) {
     .setTitle('Tenisu — L’Atelier')
     .setDescription('Tennis players and statistics API.')
     .setVersion('0.0.1');
-  const apiStage = process.env.API_STAGE;
+  const apiStage = process.env.AWS_LAMBDA_FUNCTION_NAME ? 'Prod' : undefined;
   if (apiStage) {
     config.addServer(`/${apiStage}`);
   }

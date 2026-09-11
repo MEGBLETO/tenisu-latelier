@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Tenisu L'Atelier API
+Description: Tenisu L'Atelier API (Lambda)
 
 Parameters:
   DatabaseUrl:
@@ -16,7 +16,6 @@ Globals:
     Environment:
       Variables:
         DATABASE_URL: !Ref DatabaseUrl
-        API_STAGE: Prod
 
 Resources:
   ApiFunction:
