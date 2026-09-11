@@ -50,6 +50,8 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+samconfig.toml
+.aws-sam/
 
 # Runtime data
 pids

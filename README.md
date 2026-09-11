@@ -55,6 +55,12 @@ The API runs at `http://localhost:3000/api`.
 
 Swagger docs: [localhost:3000/api/docs](http://localhost:3000/api/docs).
 
+Deployed API: [Swagger UI](https://pctjenmmwk.execute-api.eu-north-1.amazonaws.com/Prod/api/docs)
+and [health check](https://pctjenmmwk.execute-api.eu-north-1.amazonaws.com/Prod/api/health).
+The AWS deployment uses a Lambda function behind API Gateway and a Neon PostgreSQL
+database. The `DATABASE_URL` value is supplied at deployment time and is not stored
+in the repository.
+
 ## Checks
 
 ```bash
