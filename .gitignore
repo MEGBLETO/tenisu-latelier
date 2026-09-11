@@ -50,6 +50,7 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+samconfig.toml
 
 # Runtime data
 pids
