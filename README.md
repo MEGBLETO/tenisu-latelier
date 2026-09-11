@@ -2,31 +2,28 @@
 
 Tennis API take-home using NestJS, TypeScript, Prisma, and PostgreSQL.
 
-`GET /api/players?page=1&limit=20&search=novak` returns players ordered by rank,
-then ID for ties. The response contains `players`, `total`, `page`, and `limit`.
-Page defaults to 1 and limit to 20 (maximum 100). Optional search matches part of
-either first or last name, ignoring case and surrounding whitespace. `total` counts
-all matching players. Pages beyond the results return an empty `players` array.
-`GET /api/players/:id` returns a player, or 404 if the player does not exist.
-Invalid IDs return 400.
-`GET /api/statistics` returns the best country win ratio, average BMI, and median height.
-`POST /api/players` accepts the same player structure without `id` and returns
-201 with the created player and a `Location` header. All fields are required;
-unknown fields are rejected. Names must not be blank, URLs must use HTTP or HTTPS,
-and country codes must contain three uppercase letters. Rank, weight, and height
-must be positive integers; points and age can be zero. Match history accepts only
-0 and 1, including an empty array. Integers are limited to 2147483647.
-Existing countries keep their stored picture; new countries are created with the player.
+## API
 
-`GET /api/health` checks that the API can reach the database. It returns `200` when
-both are available and `503` when the database cannot be reached.
+- `GET /api/players?page=1&limit=20&search=novak` lists players ordered by rank,
+  then ID for ties. Search is case-insensitive and matches first or last names.
+  The response includes `players`, `total`, `page`, and `limit`.
+- `GET /api/players/:id` returns one player. Invalid IDs return `400`; unknown
+  players return `404`.
+- `GET /api/statistics` returns the best country win ratio, average BMI, and median
+  height.
+- `POST /api/players` creates a player and returns `201` with a `Location` header.
+- `GET /api/health` checks the API and database connection, returning `503` when
+  the database is unavailable.
 
-Statistics use recent match results (`last`). Country ratios use total wins divided
-by total matches, with ties resolved alphabetically by country code. Countries
-without matches are excluded. BMI is averaged per player using kilograms and metres;
-height is returned in centimetres. BMI and win ratio are rounded to two decimals
-after calculation. An empty database returns null for all three fields; no match
-history returns null for the best country.
+Requests reject unknown fields and invalid values. Names cannot be blank, URLs must
+use HTTP or HTTPS, country codes must be three uppercase letters, and match history
+can contain only `0` and `1`. Rank, weight, and height must be positive integers;
+points and age may be zero. Existing countries keep their stored picture.
+
+Statistics use the recent match results in `last`. Country ratios are total wins
+divided by total matches, with alphabetical tie-breaking. BMI uses kilograms and
+metres, and height is returned in centimetres. Values are rounded to two decimals;
+empty data returns `null` values.
 
 ## Getting started
 
@@ -55,8 +52,11 @@ The API runs at `http://localhost:3000/api`.
 
 Swagger docs: [localhost:3000/api/docs](http://localhost:3000/api/docs).
 
-Deployed API: [Swagger UI](https://pctjenmmwk.execute-api.eu-north-1.amazonaws.com/Prod/api/docs)
-and [health check](https://pctjenmmwk.execute-api.eu-north-1.amazonaws.com/Prod/api/health).
+Deployed API:
+
+- Swagger: https://pctjenmmwk.execute-api.eu-north-1.amazonaws.com/Prod/api/docs
+- Health: https://pctjenmmwk.execute-api.eu-north-1.amazonaws.com/Prod/api/health
+
 The AWS deployment uses a Lambda function behind API Gateway and a Neon PostgreSQL
 database. The `DATABASE_URL` value is supplied at deployment time and is not stored
 in the repository.
